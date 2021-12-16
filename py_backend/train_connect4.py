@@ -37,10 +37,10 @@ def pickMove(isXturn,board):
 
 #if __name__=='_main_':
 ion()
-plt_x=tile(atleast_2d(arange(ncol+1))  ,[nrow+1,1])-.5
-plt_y=tile(atleast_2d(arange(nrow+1)).T,[1,ncol+1])-.5
 nrow=6
 ncol=7
+plt_x=tile(atleast_2d(arange(ncol+1))  ,[nrow+1,1])-.5
+plt_y=tile(atleast_2d(arange(nrow+1)).T,[1,ncol+1])-.5
 isXturn=True
 playing=True
 board=tile([0],[nrow,ncol])

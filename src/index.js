@@ -51,7 +51,8 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+    let nextState = this.state.xIsNext ? "X" : "O";
+    if (calculateWinner(squares,i,nextState) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
@@ -74,17 +75,14 @@ class Game extends React.Component {
 
 
   handleDrop(i){
-    // which is best "let", "const", "var" or nothing?
-    var nCol=7;
-    var nRow=6;
-    var inCol=i%nCol;
-    //var inRow=(i-inCol)/nCol;
-    //var outCol=inCol;
+    let nCol=7;
+    let nRow=6;
+    let inCol=i%nCol;
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    for (var outRow = nRow-1; outRow >= 0; outRow--){
-        var j=outRow*nCol+inCol;
+    for (let outRow = nRow-1; outRow >= 0; outRow--){
+        let j=outRow*nCol+inCol;
         if (!squares[j]){
           this.handleClick(j);
           return
@@ -96,7 +94,7 @@ class Game extends React.Component {
   render() {
   const history = this.state.history;
   const current = history[this.state.stepNumber];
-  const winner = calculateWinner(current.squares);
+  const winner = calculateWinner(current.squares,42,'N'); // 42 is off the board, could I use null?
 
   const moves = history.map((step,move) => {
     const desc = move ?
@@ -140,23 +138,68 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-function calculateWinner(squares) {
-  const lines = [
-    [0,1,2],
-    [3,4,5],
-    [6,7,8],
-    [0,3,6],
-    [1,4,7],
-    [2,5,8],
-    [0,4,8],
-    [2,4,6],
-  ];
-  for (let i = 0; i < lines.length; i++){
-    const [a,b,c] = lines[i];
-    if (squares[a] && squares[a]===squares[b] && squares[a] === squares[c]){
-      return squares[a];
+function calculateWinner(squares,i,nextState) {
+  let nextSquares=squares.slice()
+  nextSquares[i]=nextState
+  const nRow=6
+  const nCol=7
+  let col=i%nCol
+  let row=Math.round((i-col)/nCol)
+  const dirKey=[[1,0],
+                [1,1],
+                [0,1],
+                [-1,1]];
+  //aWin=false
+  for(let jj=0; jj<4; jj=jj+1){
+    for(let kk=0; kk<4; kk=kk+1){
+      let row1=row+dirKey[jj][0]*(0-kk)
+      let col1=col+dirKey[jj][1]*(0-kk)
+      let row2=row+dirKey[jj][0]*(1-kk)
+      let col2=col+dirKey[jj][1]*(1-kk)
+      let row3=row+dirKey[jj][0]*(2-kk)
+      let col3=col+dirKey[jj][1]*(2-kk)
+      let row4=row+dirKey[jj][0]*(3-kk)
+      let col4=col+dirKey[jj][1]*(3-kk)
+      let inbounds=(Math.min(row1,col1,row4,col4)>=0)&&(Math.max(row1,row4)< nRow)&&(Math.max(col1,col4)<nCol)
+      if (inbounds){
+        //console.log([i,jj,kk,' row ',row1,row2,row3,row4,' col ',col1,col2,col3,col4])
+        let ind1=col1+row1*nCol
+        let ind2=col2+row2*nCol
+        let ind3=col3+row3*nCol
+        let ind4=col4+row4*nCol
+        //console.log([i,jj,kk,' ind ',ind1,ind2,ind3,ind4])
+        //console.log([i,jj,kk,' ind ',squares[ind1],squares[ind2],squares[ind3],squares[ind4]])
+        let sq=nextSquares[i]
+        let sq1=nextSquares[ind1]
+        let sq2=nextSquares[ind2]
+        let sq3=nextSquares[ind3]
+        let sq4=nextSquares[ind4]
+        //console.log([i,ind1,ind2,ind3,ind4])
+        //console.log([sq,sq1,sq2,sq3,sq4])
+        if ( (sq1===sq2) &&
+             (sq1===sq3) &&
+             (sq1===sq4)) {
+            return sq
+        }
+      }
+   // if ((Math.min(row1,col1,row4,col4) >= 0   ) &&
+   //     (Math.max(row1,row4          ) <  nRow) &&
+   //     (Math.max(col1,col4          ) <  nCol)){
+   //   console.log([' row ',row1,row2,row3,row4,' col ',col1,col2,col3,col4])
+   //   var ind1=col1+row1*nCol
+   //   var ind2=col2+row2*nCol
+   //   var ind3=col3+row3*nCol
+   //   var ind4=col4+row4*nCol
+   //   //console.log([i,jj,k,'ind line=',ind1,ind2,ind3,ind4])
+   //   if ( (squares[ind1]===squares[ind2]) &&
+   //        (squares[ind1]===squares[ind3]) &&
+   //        (squares[ind1]===squares[ind4])) {
+   //       return squares[i]
+   //   }
+   // }
+
     }
   }
-  return null;
+  return null
 }
 

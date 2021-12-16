@@ -3,7 +3,7 @@ def calcWinner(board,row,col,nrow,ncol):
     dir_key=array([[ 1, 0],
                    [ 1, 1],
                    [ 0, 1],
-                   [-1,-1]])
+                   [-1, 1]])
     steps=arange(4)
     aWin=False
     for i in range(4):
