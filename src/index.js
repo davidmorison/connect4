@@ -89,11 +89,40 @@ class Game extends React.Component {
       let j=outRow*nCol+inCol;
       if (!squares[j]){
         this.handleClick(j);
+        // need to read about triggering events this.dropAI();
         return
       }
     }
   }
-
+  dropAI(){
+    let nCol=7;
+    let nRow=6;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+    for (let col=0; col<nCol; col++){
+      for (let row = nRow-1; row >= 0; row--){
+        let j=row*nCol+col;
+        if (!squares[j]){
+          const iWin = calculateWinner(squares,j,'O');
+          const uWin = calculateWinner(squares,j,'X');
+          // should account for two loops but this is just for fun
+          if (iWin || uWin){
+            return
+          }
+          break
+        }
+      }
+    }
+    for (let col=0; col<nCol; col++){
+      for (let row = nRow-1; row >= 0; row--){
+        let j=row*nCol+col;
+        if (!squares[j]){
+          this.handleClick(j);
+        }
+      }
+    }
+  }
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
