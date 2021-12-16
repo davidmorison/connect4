@@ -44,7 +44,8 @@ class Game extends React.Component {
         }
       ],
       stepNumber: 0,
-      xIsNext: true
+      xIsNext: true,
+      gameWon: false
     };
   }
   handleClick(i) {
@@ -52,7 +53,8 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     let nextState = this.state.xIsNext ? "X" : "O";
-    if (calculateWinner(squares,i,nextState) || squares[i]) {
+    let winState = calculateWinner(squares,i,nextState);
+    if (this.state.gameWon) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
@@ -63,13 +65,15 @@ class Game extends React.Component {
       }]),
     stepNumber: history.length,
     xIsNext: !this.state.xIsNext,
-  });
+    gameWon: winState
+    });
   }
 
   jumpTo(step) {
     this.setState({
       stepNumber: step,
       xIsNext: (step % 2) === 0,
+      gameWon: false // let player rewind and restart 
     });
   }
 
@@ -82,52 +86,62 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     for (let outRow = nRow-1; outRow >= 0; outRow--){
-        let j=outRow*nCol+inCol;
-        if (!squares[j]){
-          this.handleClick(j);
-          return
-        }
+      let j=outRow*nCol+inCol;
+      if (!squares[j]){
+        this.handleClick(j);
+        return
+      }
     }
-    //this.handleClick(i);
   }
 
   render() {
-  const history = this.state.history;
-  const current = history[this.state.stepNumber];
-  const winner = calculateWinner(current.squares,42,'N'); // 42 is off the board, could I use null?
-
-  const moves = history.map((step,move) => {
-    const desc = move ?
-      'Go to move #' + move:
-      'Go to game start';
-    return (
-      <li key={move}>
-        <button onClick={() => this.jumpTo(move)}>{desc}</button>
-      </li>
-    );
-  });
-
-  let status;
-  if (winner) {
-    status = 'Winner: ' + winner;
-  } else {
-    status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-  }
-
-    return (
-      <div className="game">
-        <div className="game-board">
-          <Board
-            squares={current.squares}
-            onClick={(i) => this.handleDrop(i)}
-          />
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+    let recentMove=42; //42 is off the board. should I use null?
+    let recentMark='N';
+    if (this.state.stepNumber>5){
+      const previous =history[this.state.stepNumber-1];
+      for(let i=0; i<42; i++){
+        if(current.squares[i]!==previous.squares[i]){
+          recentMove=i;
+          recentMark=current.squares[i];
+        }
+      }
+    }
+    const winner = calculateWinner(current.squares,recentMove,recentMark);
+  
+    const moves = history.map((step,move) => {
+      const desc = move ?
+        'Go to move #' + move:
+        'Go to game start';
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
+  
+    let status;
+    if (winner) {
+      status = 'Winner: ' + winner;
+    } else {
+      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
+    }
+  
+      return (
+        <div className="game">
+          <div className="game-board">
+            <Board
+              squares={current.squares}
+              onClick={(i) => this.handleDrop(i)}
+            />
+          </div>
+          <div className="game-info">
+            <div>{status}</div>
+            <ol>{moves}</ol>
+          </div>
         </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
-        </div>
-      </div>
-    );
+      );
   }
 }
 
@@ -149,7 +163,6 @@ function calculateWinner(squares,i,nextState) {
                 [1,1],
                 [0,1],
                 [-1,1]];
-  //aWin=false
   for(let jj=0; jj<4; jj=jj+1){
     for(let kk=0; kk<4; kk=kk+1){
       let row1=row+dirKey[jj][0]*(0-kk)
@@ -162,44 +175,23 @@ function calculateWinner(squares,i,nextState) {
       let col4=col+dirKey[jj][1]*(3-kk)
       let inbounds=(Math.min(row1,col1,row4,col4)>=0)&&(Math.max(row1,row4)< nRow)&&(Math.max(col1,col4)<nCol)
       if (inbounds){
-        //console.log([i,jj,kk,' row ',row1,row2,row3,row4,' col ',col1,col2,col3,col4])
         let ind1=col1+row1*nCol
         let ind2=col2+row2*nCol
         let ind3=col3+row3*nCol
         let ind4=col4+row4*nCol
-        //console.log([i,jj,kk,' ind ',ind1,ind2,ind3,ind4])
-        //console.log([i,jj,kk,' ind ',squares[ind1],squares[ind2],squares[ind3],squares[ind4]])
         let sq=nextSquares[i]
         let sq1=nextSquares[ind1]
         let sq2=nextSquares[ind2]
         let sq3=nextSquares[ind3]
         let sq4=nextSquares[ind4]
-        //console.log([i,ind1,ind2,ind3,ind4])
-        //console.log([sq,sq1,sq2,sq3,sq4])
         if ( (sq1===sq2) &&
              (sq1===sq3) &&
              (sq1===sq4)) {
             return sq
         }
       }
-   // if ((Math.min(row1,col1,row4,col4) >= 0   ) &&
-   //     (Math.max(row1,row4          ) <  nRow) &&
-   //     (Math.max(col1,col4          ) <  nCol)){
-   //   console.log([' row ',row1,row2,row3,row4,' col ',col1,col2,col3,col4])
-   //   var ind1=col1+row1*nCol
-   //   var ind2=col2+row2*nCol
-   //   var ind3=col3+row3*nCol
-   //   var ind4=col4+row4*nCol
-   //   //console.log([i,jj,k,'ind line=',ind1,ind2,ind3,ind4])
-   //   if ( (squares[ind1]===squares[ind2]) &&
-   //        (squares[ind1]===squares[ind3]) &&
-   //        (squares[ind1]===squares[ind4])) {
-   //       return squares[i]
-   //   }
-   // }
-
     }
   }
-  return null
+  return false
 }
 
